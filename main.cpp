@@ -89,9 +89,6 @@ static void init(void)
   glLightfv(GL_LIGHT0, GL_AMBIENT, lightamb);
 }
 
-/* 箱を描く関数の宣言 */
-#include "box.h"
-
 /*
 ** シーンの描画
 */
@@ -125,8 +122,6 @@ static void scene(void)
 ** GLUT のコールバック関数 **
 ****************************/
 
-/* トラックボール処理用関数の宣言 */
-#include "trackball.h"
 
 /* アニメーションのサイクル */
 #define FRAMES 360
