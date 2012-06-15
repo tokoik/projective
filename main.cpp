@@ -253,7 +253,7 @@ static void init(void)
   tile->setMaterialShininess(30.0f);
   
   // OBJ ファイルの読み込み
-  walker = new Obj("scoutwalker.obj");
+  walker = new Obj("on.dat", true);
   walker->setShader(simple);
   
   // 地面
