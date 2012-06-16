@@ -1,9 +1,17 @@
 #version 120
 
-uniform sampler2D texure0, texure1;
-varying vec4 iamb, idiff, ispec;
+// 反射光強度
+varying vec3 idiff;      // 拡散反射光強度
+
+// テクスチャ座標
+varying vec4 tc;
+
+// テクスチャ
+uniform sampler2D tex;
 
 void main(void)
 {
-  gl_FragColor = iamb + idiff + ispec;
+  vec4 color = texture2DProj(tex, tc);
+
+  gl_FragColor = vec4(mix(idiff, idiff * color.rgb, color.a), 1.0);
 }

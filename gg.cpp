@@ -425,11 +425,9 @@ void gg::loadImage(const char *name, int width, int height, GLenum format)
   // テクスチャを割り当てる
   glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, image);
   
-  // バイリニア（ミップマップなし），エッジでクランプ
+  // バイリニア（ミップマップなし）
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
   
   // 読み込みに使ったメモリを開放する
   delete[] image;

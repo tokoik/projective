@@ -1,42 +1,37 @@
 #version 120
 
 // 光源
-uniform vec4 lpos;  // 位置
-uniform vec4 lamb;  // 環境光成分
-uniform vec4 ldiff; // 拡散反射光成分
-uniform vec4 lspec; // 鏡面反射光成分
+const vec3 ldiff  = vec3(1.0, 1.0, 1.0);  // 光源強度の拡散反射成分
 
 // 材質
-uniform vec4 kamb;  // 環境光の反射係数
-uniform vec4 kdiff; // 拡散反射係数
-uniform vec4 kspec; // 鏡面反射係数
-uniform float kshi; // 輝き係数
+const vec3 kdiff  = vec3(0.8, 0.8, 0.8);  // 拡散反射係数
+
+// 頂点属性
+attribute vec4 pv;	// ローカル座標系の頂点位置
+attribute vec4 nv;  // 頂点の法線ベクトル
 
 // 変換行列
 uniform mat4 mw;    // 視点座標系への変換行列
 uniform mat4 mc;    // クリッピング座標系への変換行列
 uniform mat4 mg;    // 法線ベクトルの変換行列
+uniform mat4 mt;    // テクスチャ座標の変換行列
 
-// 頂点属性
-attribute vec4 pv;  // ローカル座標系の頂点位置
-attribute vec4 nv;  // 頂点の法線ベクトル
+// フラグメントシェーダに送る反射光強度
+varying vec3 idiff; // 拡散反射光強度
 
-// 反射光強度
-varying vec4 iamb;  // 環境光の反射光強度
-varying vec4 idiff; // 拡散反射光強度
-varying vec4 ispec; // 鏡面反射光強度
+// フラグメントシェーダに送るテクスチャ座標
+varying vec4 tc;
 
 void main(void)
 {
-  vec4 p = mw * pv;
-  vec3 v = normalize(p.xyz / p.w);
-  vec3 n = normalize(mg * nv).xyz;
-  vec3 l = normalize(lpos - p).xyz;
-  vec3 h = normalize(l - v);
-
-  iamb = kamb * lamb;
-  idiff = max(dot(n, l), 0.0) * kdiff * ldiff;
-  ispec = pow(max(dot(n, h), 0), kshi) * kspec * lspec;
+  vec3 l = normalize(vec3(4.0, 8.0, 8.0));     // 光線ベクトル
+  vec3 v = normalize((mw * pv).xyz);           // 視線ベクトル
+  vec3 n = normalize((mg * nv).xyz);           // 法線ベクトル
+  vec3 h = normalize(l - v);                   // 中間ベクトル
+  
+  idiff = max(dot(n, l), 0) * kdiff * ldiff;
+  tc = mt * pv;
   
   gl_Position = mc * pv;
 }
+

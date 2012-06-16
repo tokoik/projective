@@ -17,17 +17,17 @@ static Obj *obj = 0;                      // OBJ ファイルデータ
 static GLfloat mp[16];                    // 透視投影変換行列
 
 /*
-** SH 係数テーブル
-*/
-#include "shcoeff.h"
-static int shtable = 0;                   // SH 係数テーブルの番号
-
-/*
-** シェーダー
+** シェーダ
 */
 static GLuint program;                    // プログラムオブジェクト
 static GLint pvLoc, nvLoc;                // attribute 変数のインデックス
-static GLint mwLoc, mcLoc, mgLoc, shLoc;  // uniform 変数のインデックス
+static GLint mwLoc, mcLoc, mgLoc, mtLoc;  // 変換行列の uniform 変数のインデックス
+static GLint texLoc;                      // サンプラの uniform 変数のインデックス
+
+/*
+** テクスチャ
+*/
+static GLuint texture;                    // テクスチャ名
 
 /*
 **  アニメーション
@@ -65,6 +65,17 @@ static void display(void)
   GLfloat mc[16];
   multiply(mc, mp, mw);
   
+  // テクスチャ変換
+  GLfloat mt[16], mt1[16], mt2[16];
+  lookat(mt1, -1.0, 3.0, 2.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+  multiply(mt2, mt1, mm);
+  perspective(mt1, 0.15, 1.0, 1.0, 8.0);
+  multiply(mt, mt1, mt2);
+  scale(mt1, 0.5, -0.5, 1.0);
+  multiply(mt2, mt1, mt);
+  translate(mt1, 0.5, 0.5, 0.0);
+  multiply(mt, mt1, mt2);
+ 
   // 画面クリア
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   
@@ -75,7 +86,8 @@ static void display(void)
   glUniformMatrix4fv(mwLoc, 1, GL_FALSE, mw);
   glUniformMatrix4fv(mcLoc, 1, GL_FALSE, mc);
   glUniformMatrix4fv(mgLoc, 1, GL_FALSE, mg);
-  glUniform3fv(shLoc, 9, *shcoeff[shtable]);
+  glUniformMatrix4fv(mtLoc, 1, GL_FALSE, mt);
+  glUniform1i(texLoc, 0);
   
   // 図形を描画する
   obj->draw(pvLoc, nvLoc);
@@ -96,13 +108,29 @@ static void resize(int w, int h)
 }
 
 /*
+** アニメーション
+*/
+static void idle(void)
+{
+  glutPostRedisplay();
+}
+
+/*
 ** キーボード
 */
 static void keyboard(unsigned char key, int x, int y)
 {
   switch (key) {
     case ' ':
-      if (++shtable >= nshcoeff) shtable = 0;
+      glutPostRedisplay();
+      break;
+    case 's':
+    case 'S':
+      glutIdleFunc(0);
+      break;
+    case 'g':
+    case 'G':
+      glutIdleFunc(idle);
       break;
     case '\033':
     case 'Q':
@@ -111,14 +139,6 @@ static void keyboard(unsigned char key, int x, int y)
     default:
       break;
   }
-}
-
-/*
-** アニメーション
-*/
-static void idle(void)
-{
-  glutPostRedisplay();
 }
 
 /*
@@ -135,13 +155,13 @@ static void cleanup(void)
 static void init(void)
 {
   // ゲームグラフィックス特論の都合にもとづく初期化
-  gg::ggInit();
+  ggInit();
 
   // OBJ ファイルの読み込み
   obj = new Obj("model.dat", true);
   
   // シェーダプログラムの読み込み
-  program = gg::loadShader("simple.vert", "simple.frag", 0);
+  program = loadShader("simple.vert", "simple.frag", 0);
 
   // attribute 変数のインデックスの検索（見つからなければ -1）
   pvLoc = glGetAttribLocation(program, "pv");
@@ -151,8 +171,17 @@ static void init(void)
   mwLoc = glGetUniformLocation(program, "mw");
   mcLoc = glGetUniformLocation(program, "mc");
   mgLoc = glGetUniformLocation(program, "mg");
-  shLoc = glGetUniformLocation(program, "sh");
+  mtLoc = glGetUniformLocation(program, "mt");
+  texLoc = glGetUniformLocation(program, "tex");
   
+  // テクスチャファイルの読み込み
+  glGenTextures(1, &texture);
+  glBindTexture(GL_TEXTURE_2D, texture);
+  glActiveTexture(GL_TEXTURE0);
+  loadImage("sysa.raw", 512, 512, GL_RGBA);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
   // 隠面消去
   glEnable(GL_DEPTH_TEST);
 
@@ -168,6 +197,7 @@ static void init(void)
 */
 int main(int argc, char *argv[])
 {
+  glutInitWindowSize(512, 512);
   glutInit(&argc, argv);
   glutInitDisplayMode(GLUT_RGB | GLUT_DEPTH | GLUT_DOUBLE);
   glutCreateWindow(argv[0]);
