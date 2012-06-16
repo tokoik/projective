@@ -1,342 +1,182 @@
-#include <cstdlib>
-#include <cstring>
 #include <cmath>
+#include <cstdlib>
 
 #include "gg.h"
 using namespace gg;
 
 /*
-** トラックボール処理
-*/
-#include "Trackball.h"
-static Trackball *tb = 0;
-
-/*
-** 投影変換行列
-*/
-#include "Matrix.h"
-static Matrix *mp = 0;
-
-/*
-** 地面
-*/
-#include "Square.h"
-static Square *ground = 0;
-
-/*
 ** OBJ ファイル
 */
 #include "Obj.h"
-static Obj *walker = 0;
+static Obj *obj = 0;                      // OBJ ファイルデータ
 
 /*
-** 光源
+** 座標変換
 */
-static const GLfloat lpos[] = { 3.0f, 4.0f, 5.0f, 1.0 };
-static const GLfloat lamb[] = { 0.2f, 0.2f, 0.2f, 1.0 };
-static const GLfloat ldiff[] = { 1.0f, 1.0f, 1.0f, 1.0 };
-static const GLfloat lspec[] = { 1.0f, 1.0f, 1.0f, 1.0 };
+#include "matrix.h"
+static GLfloat mp[16];                    // 透視投影変換行列
 
 /*
-** シェーダ
+** SH 係数テーブル
 */
-#include "SimpleShader.h"
-static SimpleShader *simple = 0;
-#include "TileShader.h"
-static TileShader *tile = 0;
+#include "shcoeff.h"
+static int shtable = 0;                   // SH 係数テーブルの番号
 
 /*
-** フレームバッファオブジェクト
+** シェーダー
 */
-#define FBOWIDTH  1024      // フレームバッファオブジェクトの幅
-#define FBOHEIGHT 1024      // フレームバッファオブジェクトの高さ
-static GLuint fb;           // 映り込み用のフレームバッファオブジェクト
-static GLuint cb;           // カラーバッファ用のテクスチャ
-static GLuint rb;           // デプスバッファ用のレンダーバッファ
-static GLuint sb;           // シャドウマップ用のフレームバッファオブジェクト
-static GLuint db;           // シャドウマップ用のテクスチャ
+static GLuint program;                    // プログラムオブジェクト
+static GLint pvLoc, nvLoc;                // attribute 変数のインデックス
+static GLint mwLoc, mcLoc, mgLoc, shLoc;  // uniform 変数のインデックス
 
+/*
+**  アニメーション
+*/
+#define CYCLE 10000                       // 周期
+
+/*
+** 画面表示
+*/
 static void display(void)
 {
-  // ビューポートの保存と設定
-  tile->saveViewport();
-  glViewport(0, 0, FBOWIDTH, FBOHEIGHT);
-  
-  // シーン全体を収める投影変換行列
-  Matrix mq;
-  mq.loadPerspective(0.2f, 1.0f, 6.0f, 10.0f);
-  
-  // 光源を視点にした視野変換行列
-  Matrix ml;
-  ml.loadLookat(lpos[0], lpos[1], lpos[2], 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f);
-  
-  // フレームバッファオブジェクトを結合する
-  glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, sb);
-  
-  // デプスバッファをクリア
-  glClear(GL_DEPTH_BUFFER_BIT);
-  
-  // シャドウマップの作成
-  simple->setLightPosition(lpos);
-  simple->loadMatrix(mq, ml * tb->get());
-  walker->setCullFace(false);
-  walker->draw();
-  
-  // フレームバッファオブジェクトの結合を解除する
-  glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
-  
+  // 時刻の計測
+  static int firstTime = 0;
+  GLfloat t;
+  if (firstTime == 0) { firstTime = glutGet(GLUT_ELAPSED_TIME); t = 0.0f; }
+  else t = (GLfloat)((glutGet(GLUT_ELAPSED_TIME) - firstTime) % CYCLE) / (GLfloat)CYCLE;
+
+  // モデリング変換行列
+  GLfloat mm[16];
+  rotate(mm, 0.0f, 1.0f, 0.0f, 12.56637f * t);
+
   // 視野変換行列
-  Matrix mv;
-  mv.loadLookat(0.0f, 1.5f, 3.0f, 0.0f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f);
+  GLfloat mv[16];
+  lookat(mv, 0.0f, 1.0f, 2.3f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f);
   
-  // 鏡像変換
-  Matrix mr;
-  mr.loadTranslate(0.0f, -0.6f, 0.0f);
-  mr.scale(1.0f, -1.0f, 1.0f);
-  mr.translate(0.0f, 0.6f, 0.0f);
+  // モデルビュー変換行列
+  GLfloat mw[16];
+  multiply(mw, mv, mm);
   
-  // 鏡像の光源位置
-  GLfloat rlpos[4];
-  mr.projection(rlpos, lpos);
-  rlpos[0] = -rlpos[0];
-  rlpos[1] = -rlpos[1];
-  rlpos[2] = -rlpos[2];
+  // 法線変換行列
+  GLfloat mg[16];
+  normal(mg, mw);
   
-  // フレームバッファオブジェクトを結合する
-  glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, fb);
-  
-  // カラーバッファとデプスバッファをクリア
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-  
-  // 鏡像の描画
-  simple->setLightPosition(rlpos);
-  simple->loadMatrix(*mp, mv * mr * tb->get());
-  walker->setCullFace(false);
-  walker->draw();
-  
-  // フレームバッファオブジェクトの結合を解除する
-  glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
-  
-  // ビューポートの復帰
-  tile->restoreViewport();
+  // モデルビュー・投影変換
+  GLfloat mc[16];
+  multiply(mc, mp, mw);
   
   // 画面クリア
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   
-  // 図形の描画
-  simple->setLightPosition(lpos);
-  simple->loadMatrix(*mp, mv * tb->get());
-  walker->setCullFace(true);
-  walker->draw();
+  // シェーダプログラムの選択
+  glUseProgram(program);
   
-  // 床面の描画
-  Matrix mm;
-  mm.loadTranslate(0.0f, -0.6f, 0.0f);
-  mm.rotate(1.0f, 0.0f, 0.0f, -1.5707963f);
-  tile->loadMatrix(*mp, mv * mm);
-  Matrix ms;
-  ms.loadTranslate(0.5, 0.5, 0.5);
-  ms.scale(0.5, 0.5, 0.5);
-  tile->loadShadowMatrix(ms * mq * ml * mm);
-  tile->setTexture0(0, cb);
-  tile->setTexture1(1, db);
-  ground->draw();
+  // uniform 変数を設定する
+  glUniformMatrix4fv(mwLoc, 1, GL_FALSE, mw);
+  glUniformMatrix4fv(mcLoc, 1, GL_FALSE, mc);
+  glUniformMatrix4fv(mgLoc, 1, GL_FALSE, mg);
+  glUniform3fv(shLoc, 9, *shcoeff[shtable]);
+  
+  // 図形を描画する
+  obj->draw(pvLoc, nvLoc);
 
-  // ダブルバッファリング
   glutSwapBuffers();
 }
 
+/*
+** ウィンドウのリサイズ
+*/
 static void resize(int w, int h)
 {
-  // ウィンドウ全体に表示
+  // ウィンドウ全体をビューポートにする
   glViewport(0, 0, w, h);
   
-  // 投影変換行列
-  mp->loadPerspective(0.6f, (GLfloat)w / (GLfloat)h, 1.0f, 10.0f);
-
-  // トラックボールする範囲
-  tb->region(w, h);
+  // 透視投影変換行列を求める（アスペクト比 w / h）
+  perspective(mp, 0.5f, (float)w / (float)h, 1.0f, 20.0f);
 }
 
-static void idle(void)
-{
-  // 画面の描き替え
-  glutPostRedisplay();
-}
-
-// 押されているボタン
-static int press = 0;
-
-static void mouse(int button, int state, int x, int y)
-{
-  switch (press = button) {
-  case GLUT_LEFT_BUTTON:
-    if (state == GLUT_DOWN) {
-      // トラックボール開始
-      tb->start(x, y);
-      glutIdleFunc(idle);
-    }
-    else {
-      // トラックボール停止
-      tb->stop(x, y);
-      glutIdleFunc(0);
-    }
-    break;
-  case GLUT_RIGHT_BUTTON:
-    break;
-  default:
-    break;
-  }
-}
-
-static void motion(int x, int y)
-{
-  switch (press) {
-  case GLUT_LEFT_BUTTON:
-    // トラックボール移動
-    tb->motion(x, y);
-    break;
-  case GLUT_RIGHT_BUTTON:
-    break;
-  default:
-    break;
-  }
-}
-
-static void keyboard(unsigned char key, int kx, int ky)
+/*
+** キーボード
+*/
+static void keyboard(unsigned char key, int x, int y)
 {
   switch (key) {
-    // ESC か q か Q をタイプしたら終了
+    case ' ':
+      if (++shtable >= nshcoeff) shtable = 0;
+      break;
+    case '\033':
     case 'Q':
     case 'q':
-    case '\033':
       exit(0);
     default:
       break;
   }
 }
 
-static void leave(void)
+/*
+** アニメーション
+*/
+static void idle(void)
 {
-  delete walker;
-  delete ground;
-  delete mp;
-  delete tb;
+  glutPostRedisplay();
 }
 
+/*
+** 後始末
+*/
+static void cleanup(void)
+{
+  delete obj;
+}
+
+/*
+** 初期化
+*/
 static void init(void)
 {
   // ゲームグラフィックス特論の都合にもとづく初期化
-  ggInit();
+  gg::ggInit();
+
+  // OBJ ファイルの読み込み
+  obj = new Obj("model.dat", true);
   
   // シェーダプログラムの読み込み
-  simple = new SimpleShader("simple.vert", "simple.frag");
-  tile = new TileShader("tile.vert", "tile.frag");
-  
-  // 光源
-  simple->setLightAmbient(lamb);
-  simple->setLightDiffuse(ldiff);
-  simple->setLightSpecular(lspec);
-  tile->setLightPosition(lpos);
-  tile->setLightAmbient(lamb);
-  tile->setLightDiffuse(ldiff);
-  tile->setLightSpecular(lspec);
-  
-  // 材質
-  simple->setMaterialAmbient(0.4f, 0.5f, 0.0f);
-  simple->setMaterialDiffuse(0.4f, 0.5f, 0.0f);
-  simple->setMaterialSpecular(0.2f, 0.2f, 0.2f);
-  simple->setMaterialShininess(50.0f);
-  tile->setMaterialAmbient(0.8f, 0.8f, 0.8f);
-  tile->setMaterialDiffuse(0.8f, 0.8f, 0.8f);
-  tile->setMaterialSpecular(0.2f, 0.2f, 0.2f);
-  tile->setMaterialShininess(30.0f);
-  
-  // OBJ ファイルの読み込み
-  walker = new Obj("on.dat", true);
-  walker->setShader(simple);
-  
-  // 地面
-  ground = new Square(3.0f, 3.0f);
-  ground->setShader(tile);
-  
-  // 変換行列
-  mp = new Matrix;
-  
-  // トラックボール処理
-  tb = new Trackball;
-  
-  // カラーバッファ用のテクスチャを用意する
-  glGenTextures(1, &cb);
-  glBindTexture(GL_TEXTURE_2D, cb);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, FBOWIDTH, FBOHEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  glBindTexture(GL_TEXTURE_2D, 0);
-  
-  // デプスバッファ用のレンダーバッファを用意する
-  glGenRenderbuffersEXT(1, &rb);
-  glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, rb);
-  glRenderbufferStorageEXT(GL_RENDERBUFFER_EXT, GL_DEPTH_COMPONENT, FBOWIDTH, FBOHEIGHT);
-  glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, 0);
+  program = gg::loadShader("simple.vert", "simple.frag", 0);
 
-  // 映り込み用のフレームバッファオブジェクトを作成する
-  glGenFramebuffersEXT(1, &fb);
-  glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, fb);
-  glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, cb, 0);
-  glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, rb);
-  glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
-
-  // デプスバッファ用のテクスチャを用意する
-  glGenTextures(1, &db);
-  glBindTexture(GL_TEXTURE_2D, db);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, FBOWIDTH, FBOHEIGHT, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, 0);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  // 書き込むポリゴンのテクスチャ座標値のＲとテクスチャとの比較を行うようにする
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
-  // もしＲの値がテクスチャの値以下なら真（つまり日向）
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
-  // 比較の結果を輝度値として得る
-  glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_LUMINANCE);
-  glBindTexture(GL_TEXTURE_2D, 0);
+  // attribute 変数のインデックスの検索（見つからなければ -1）
+  pvLoc = glGetAttribLocation(program, "pv");
+  nvLoc = glGetAttribLocation(program, "nv");
   
-  // シャドウマッピング用のフレームバッファオブジェクトを作成する
-  glGenFramebuffersEXT(1, &sb);
-  glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, sb);
-  glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_TEXTURE_2D, db, 0);
-  // カラーバッファは無いので描かない
-  glDrawBuffer(GL_NONE);
-  // カラーバッファは無いので読まない
-  glReadBuffer(GL_NONE);
-  glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
+  // uniform 変数のインデックスの検索（見つからなければ -1）
+  mwLoc = glGetUniformLocation(program, "mw");
+  mcLoc = glGetUniformLocation(program, "mc");
+  mgLoc = glGetUniformLocation(program, "mg");
+  shLoc = glGetUniformLocation(program, "sh");
   
-  // 初期設定
-  glClearColor(1.0, 1.0, 1.0, 0.0);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  // 隠面消去
   glEnable(GL_DEPTH_TEST);
-  glEnable(GL_CULL_FACE);
+
+  // 背景色
+  glClearColor(0.2f, 0.4f, 0.6f, 1.0f);
   
   // 後始末
-  atexit(leave);
+  atexit(cleanup);
 }
 
+/*
+** メインプログラム
+*/
 int main(int argc, char *argv[])
 {
-  glutInitWindowSize(800, 800);
   glutInit(&argc, argv);
-  glutInitDisplayMode(GLUT_RGBA | GLUT_DEPTH | GLUT_DOUBLE);
-  glutCreateWindow("Walker");
+  glutInitDisplayMode(GLUT_RGB | GLUT_DEPTH | GLUT_DOUBLE);
+  glutCreateWindow(argv[0]);
   glutDisplayFunc(display);
   glutReshapeFunc(resize);
-  glutMouseFunc(mouse);
-  glutMotionFunc(motion);
   glutKeyboardFunc(keyboard);
+  glutIdleFunc(idle);
   init();
   glutMainLoop();
+  
   return 0;
 }
