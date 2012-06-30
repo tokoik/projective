@@ -23,11 +23,17 @@ static GLuint program;                    // プログラムオブジェクト
 static GLint pvLoc, nvLoc;                // attribute 変数のインデックス
 static GLint mwLoc, mcLoc, mgLoc, mtLoc;  // 変換行列の uniform 変数のインデックス
 static GLint texLoc;                      // サンプラの uniform 変数のインデックス
+static GLint tpLoc;                       // テクスチャの投影方向の uniform 変数のインデックス
 
 /*
 ** テクスチャ
 */
 static GLuint texture;                    // テクスチャ名
+
+/*
+** テクスチャの投影方向
+*/
+static GLfloat tp[] = { -1.0, 3.0, 2.0 };
 
 /*
 **  アニメーション
@@ -67,7 +73,7 @@ static void display(void)
   
   // テクスチャ変換
   GLfloat mt[16], mt1[16], mt2[16];
-  lookat(mt1, -1.0, 3.0, 2.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+  lookat(mt1, tp[0], tp[2], tp[2], 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
   multiply(mt2, mt1, mm);
   perspective(mt1, 0.15, 1.0, 1.0, 8.0);
   multiply(mt, mt1, mt2);
@@ -88,6 +94,7 @@ static void display(void)
   glUniformMatrix4fv(mgLoc, 1, GL_FALSE, mg);
   glUniformMatrix4fv(mtLoc, 1, GL_FALSE, mt);
   glUniform1i(texLoc, 0);
+  glUniform3fv(tpLoc, 1, tp);
   
   // 図形を描画する
   obj->draw(pvLoc, nvLoc);
@@ -173,6 +180,7 @@ static void init(void)
   mgLoc = glGetUniformLocation(program, "mg");
   mtLoc = glGetUniformLocation(program, "mt");
   texLoc = glGetUniformLocation(program, "tex");
+  tpLoc = glGetUniformLocation(program, "tp");
   
   // テクスチャファイルの読み込み
   glGenTextures(1, &texture);

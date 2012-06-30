@@ -1,7 +1,8 @@
 #version 120
 
 // 反射光強度
-varying vec3 idiff;      // 拡散反射光強度
+varying vec3 idiff;
+varying vec3 tdiff;
 
 // テクスチャ座標
 varying vec4 tc;
@@ -13,5 +14,5 @@ void main(void)
 {
   vec4 color = texture2DProj(tex, tc);
 
-  gl_FragColor = vec4(mix(idiff, idiff * color.rgb, color.a), 1.0);
+  gl_FragColor = vec4(idiff + tdiff * color.rgb * color.a, 1.0);
 }
