@@ -73,13 +73,13 @@ static void display(void)
   
   // テクスチャ変換
   GLfloat mt[16], mt1[16], mt2[16];
-  lookat(mt1, tp[0], tp[2], tp[2], 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+  lookat(mt1, tp[0], tp[2], tp[2], 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f);
   multiply(mt2, mt1, mm);
-  perspective(mt1, 0.15, 1.0, 1.0, 8.0);
+  perspective(mt1, 0.15f, 1.0f, 1.0f, 8.0f);
   multiply(mt, mt1, mt2);
-  scale(mt1, 0.5, -0.5, 1.0);
+  scale(mt1, 0.5f, -0.5f, 1.0f);
   multiply(mt2, mt1, mt);
-  translate(mt1, 0.5, 0.5, 0.0);
+  translate(mt1, 0.5f, 0.5f, 0.0f);
   multiply(mt, mt1, mt2);
  
   // 画面クリア
