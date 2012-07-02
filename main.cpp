@@ -22,8 +22,22 @@ static GLfloat mp[16];                    // 透視投影変換行列
 static GLuint program;                    // プログラムオブジェクト
 static GLint pvLoc, nvLoc;                // attribute 変数のインデックス
 static GLint mwLoc, mcLoc, mgLoc, mtLoc;  // 変換行列の uniform 変数のインデックス
+static GLint ldirLoc, lcolLoc, acolLoc;   // 光源の uniform 変数のインデックス
+static GLint kdiffLoc;                    // 材質の uniform 変数のインデックス
 static GLint texLoc;                      // サンプラの uniform 変数のインデックス
 static GLint tpLoc;                       // テクスチャの投影方向の uniform 変数のインデックス
+
+/*
+** 光源
+*/
+static GLfloat ldir[] = { 3.0f, 4.0f, 5.0f };   // 光源方向
+static GLfloat lcol[] = { 0.3f, 0.3f, 0.3f };   // 光源強度
+static GLfloat acol[] = { 0.1f, 0.1f, 0.1f };   // 環境光強度
+
+/*
+** 材質
+*/
+static GLfloat kdiff[] = { 0.8f, 0.8f, 0.8f };  // 拡散反射係数
 
 /*
 ** テクスチャ
@@ -93,12 +107,19 @@ static void display(void)
   glUniformMatrix4fv(mcLoc, 1, GL_FALSE, mc);
   glUniformMatrix4fv(mgLoc, 1, GL_FALSE, mg);
   glUniformMatrix4fv(mtLoc, 1, GL_FALSE, mt);
+  glUniform3fv(ldirLoc, 1, ldir);
+  glUniform3fv(lcolLoc, 1, lcol);
+  glUniform3fv(acolLoc, 1, acol);
+  glUniform3fv(kdiffLoc, 1, kdiff);
   glUniform1i(texLoc, 0);
   glUniform3fv(tpLoc, 1, tp);
   
   // 図形を描画する
   obj->draw(pvLoc, nvLoc);
 
+  // 固定機能シェーダに戻す
+  glUseProgram(0);
+  
   glutSwapBuffers();
 }
 
@@ -179,6 +200,10 @@ static void init(void)
   mcLoc = glGetUniformLocation(program, "mc");
   mgLoc = glGetUniformLocation(program, "mg");
   mtLoc = glGetUniformLocation(program, "mt");
+  lcolLoc = glGetUniformLocation(program, "lcol");
+  ldirLoc = glGetUniformLocation(program, "ldir");
+  acolLoc = glGetUniformLocation(program, "acol");
+  kdiffLoc = glGetUniformLocation(program, "kdiff");
   texLoc = glGetUniformLocation(program, "tex");
   tpLoc = glGetUniformLocation(program, "tp");
   
