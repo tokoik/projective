@@ -79,7 +79,11 @@ static void display(void)
   
   // テクスチャ変換
   GgMatrix mt;
-  mt.loadPerspective(0.15f, 1.0f, 1.0f, 8.0f).lookat(tp[0], tp[2], tp[2], 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f);
+  mt.loadIdentity();
+  mt = mt.translate(0.5f, 0.5f, 0.5f);
+  mt = mt.scale(0.5f, 0.5f, 0.5f);
+  mt = mt.perspective(0.15f, 1.0f, 1.0f, 8.0f);
+  mt = mt.lookat(tp[0], tp[2], tp[2], 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f);
  
   // 画面クリア
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

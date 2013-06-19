@@ -23,7 +23,6 @@ uniform vec3 tp;
 
 // フラグメントシェーダに送る反射光強度
 varying vec3 idiff;
-varying vec3 i;
 varying vec3 tdiff;
 
 // フラグメントシェーダに送るテクスチャ座標
@@ -39,7 +38,7 @@ void main(void)
   
   idiff = (max(dot(n, l), 0) * lcol + acol) * kdiff;
   tdiff = max(dot(n, t), 0) * kdiff;
-  tc = mt * pv * 0.5 + 0.5;
+  tc = mt * pv;
   
   gl_Position = mc * pv;
 }
