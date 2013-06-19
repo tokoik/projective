@@ -189,7 +189,7 @@ static void init(void)
   obj = new Obj("model.dat", true);
   
   // シェーダプログラムの読み込み
-  program = loadShader("simple.vert", "simple.frag", 0);
+  program = ggLoadShader("simple.vert", "simple.frag");
 
   // attribute 変数のインデックスの検索（見つからなければ -1）
   pvLoc = glGetAttribLocation(program, "pv");
@@ -211,7 +211,7 @@ static void init(void)
   glGenTextures(1, &texture);
   glBindTexture(GL_TEXTURE_2D, texture);
   glActiveTexture(GL_TEXTURE0);
-  loadImage("sysa.raw", 512, 512, GL_RGBA);
+  ggLoadImage("sysa.tga", GL_RGBA);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
