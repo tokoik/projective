@@ -39,7 +39,7 @@ void main(void)
   
   idiff = (max(dot(n, l), 0) * lcol + acol) * kdiff;
   tdiff = max(dot(n, t), 0) * kdiff;
-  tc = mt * pv;
+  tc = mt * pv * 0.5 + 0.5;
   
   gl_Position = mc * pv;
 }

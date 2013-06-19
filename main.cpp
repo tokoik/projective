@@ -7,42 +7,40 @@ using namespace gg;
 /*
 ** OBJ ファイル
 */
-#include "Obj.h"
-static Obj *obj = 0;                      // OBJ ファイルデータ
+static GgElements *obj = 0;                           // OBJ ファイルデータ
 
 /*
 ** 座標変換
 */
-#include "matrix.h"
-static GLfloat mp[16];                    // 透視投影変換行列
+static GgMatrix mp;                                   // 透視投影変換行列
 
 /*
 ** シェーダ
 */
-static GLuint program;                    // プログラムオブジェクト
-static GLint pvLoc, nvLoc;                // attribute 変数のインデックス
-static GLint mwLoc, mcLoc, mgLoc, mtLoc;  // 変換行列の uniform 変数のインデックス
-static GLint ldirLoc, lcolLoc, acolLoc;   // 光源の uniform 変数のインデックス
-static GLint kdiffLoc;                    // 材質の uniform 変数のインデックス
-static GLint texLoc;                      // サンプラの uniform 変数のインデックス
-static GLint tpLoc;                       // テクスチャの投影方向の uniform 変数のインデックス
+static GLuint program;                                // プログラムオブジェクト
+static GLint pvLoc, nvLoc;                            // attribute 変数のインデックス
+static GLint mwLoc, mcLoc, mgLoc, mtLoc;              // 変換行列の uniform 変数のインデックス
+static GLint ldirLoc, lcolLoc, acolLoc;               // 光源の uniform 変数のインデックス
+static GLint kdiffLoc;                                // 材質の uniform 変数のインデックス
+static GLint texLoc;                                  // サンプラの uniform 変数のインデックス
+static GLint tpLoc;                                   // テクスチャの投影方向の uniform 変数のインデックス
 
 /*
 ** 光源
 */
-static GLfloat ldir[] = { 3.0f, 4.0f, 5.0f };   // 光源方向
-static GLfloat lcol[] = { 0.3f, 0.3f, 0.3f };   // 光源強度
-static GLfloat acol[] = { 0.1f, 0.1f, 0.1f };   // 環境光強度
+static const GLfloat ldir[] = { 3.0f, 4.0f, 5.0f };   // 光源方向
+static const GLfloat lcol[] = { 0.3f, 0.3f, 0.3f };   // 光源強度
+static const GLfloat acol[] = { 0.1f, 0.1f, 0.1f };   // 環境光強度
 
 /*
 ** 材質
 */
-static GLfloat kdiff[] = { 0.8f, 0.8f, 0.8f };  // 拡散反射係数
+static const GLfloat kdiff[] = { 0.8f, 0.8f, 0.8f };  // 拡散反射係数
 
 /*
 ** テクスチャ
 */
-static GLuint texture;                    // テクスチャ名
+static GLuint texture;                                // テクスチャ名
 
 /*
 ** テクスチャの投影方向
@@ -52,7 +50,7 @@ static GLfloat tp[] = { -1.0, 3.0, 2.0 };
 /*
 **  アニメーション
 */
-#define CYCLE 10000                       // 周期
+#define CYCLE 10000                                   // 周期
 
 /*
 ** 画面表示
@@ -65,36 +63,23 @@ static void display(void)
   if (firstTime == 0) { firstTime = glutGet(GLUT_ELAPSED_TIME); t = 0.0f; }
   else t = (GLfloat)((glutGet(GLUT_ELAPSED_TIME) - firstTime) % CYCLE) / (GLfloat)CYCLE;
 
-  // モデリング変換行列
-  GLfloat mm[16];
-  rotate(mm, 0.0f, 1.0f, 0.0f, 12.56637f * t);
-
-  // 視野変換行列
-  GLfloat mv[16];
-  lookat(mv, 0.0f, 1.0f, 2.3f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f);
+  // ビュー変換行列
+  GgMatrix mv;
+  mv.loadLookat(0.0f, 1.0f, 2.3f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f);
   
   // モデルビュー変換行列
-  GLfloat mw[16];
-  multiply(mw, mv, mm);
+  GgMatrix mw = mv.rotate(0.0f, 1.0f, 0.0f, 12.56637f * t);
   
   // 法線変換行列
-  GLfloat mg[16];
-  normal(mg, mw);
+  GgMatrix mg;
+  mg.loadNormal(mw);
   
   // モデルビュー・投影変換
-  GLfloat mc[16];
-  multiply(mc, mp, mw);
+  GgMatrix mc = mp * mw;
   
   // テクスチャ変換
-  GLfloat mt[16], mt1[16], mt2[16];
-  lookat(mt1, tp[0], tp[2], tp[2], 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f);
-  multiply(mt2, mt1, mm);
-  perspective(mt1, 0.15f, 1.0f, 1.0f, 8.0f);
-  multiply(mt, mt1, mt2);
-  scale(mt1, 0.5f, -0.5f, 1.0f);
-  multiply(mt2, mt1, mt);
-  translate(mt1, 0.5f, 0.5f, 0.0f);
-  multiply(mt, mt1, mt2);
+  GgMatrix mt;
+  mt.loadPerspective(0.15f, 1.0f, 1.0f, 8.0f).lookat(tp[0], tp[2], tp[2], 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f);
  
   // 画面クリア
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -103,10 +88,10 @@ static void display(void)
   glUseProgram(program);
   
   // uniform 変数を設定する
-  glUniformMatrix4fv(mwLoc, 1, GL_FALSE, mw);
-  glUniformMatrix4fv(mcLoc, 1, GL_FALSE, mc);
-  glUniformMatrix4fv(mgLoc, 1, GL_FALSE, mg);
-  glUniformMatrix4fv(mtLoc, 1, GL_FALSE, mt);
+  glUniformMatrix4fv(mwLoc, 1, GL_FALSE, mw.get());
+  glUniformMatrix4fv(mcLoc, 1, GL_FALSE, mc.get());
+  glUniformMatrix4fv(mgLoc, 1, GL_FALSE, mg.get());
+  glUniformMatrix4fv(mtLoc, 1, GL_FALSE, mt.get());
   glUniform3fv(ldirLoc, 1, ldir);
   glUniform3fv(lcolLoc, 1, lcol);
   glUniform3fv(acolLoc, 1, acol);
@@ -115,7 +100,7 @@ static void display(void)
   glUniform3fv(tpLoc, 1, tp);
   
   // 図形を描画する
-  obj->draw(pvLoc, nvLoc);
+  obj->draw();
 
   // 固定機能シェーダに戻す
   glUseProgram(0);
@@ -132,7 +117,7 @@ static void resize(int w, int h)
   glViewport(0, 0, w, h);
   
   // 透視投影変換行列を求める（アスペクト比 w / h）
-  perspective(mp, 0.5f, (float)w / (float)h, 1.0f, 20.0f);
+  mp.loadPerspective(0.5f, (float)w / (float)h, 1.0f, 20.0f);
 }
 
 /*
@@ -186,7 +171,7 @@ static void init(void)
   ggInit();
 
   // OBJ ファイルの読み込み
-  obj = new Obj("model.dat", true);
+  obj = ggElementsObj("model.dat");
   
   // シェーダプログラムの読み込み
   program = ggLoadShader("simple.vert", "simple.frag");
@@ -212,8 +197,6 @@ static void init(void)
   glBindTexture(GL_TEXTURE_2D, texture);
   glActiveTexture(GL_TEXTURE0);
   ggLoadImage("sysa.tga", GL_RGBA);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
   // 隠面消去
   glEnable(GL_DEPTH_TEST);
