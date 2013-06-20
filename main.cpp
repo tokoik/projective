@@ -13,6 +13,7 @@ static GgElements *obj = 0;                           // OBJ ファイルデータ
 ** 座標変換
 */
 static GgMatrix mp;                                   // 透視投影変換行列
+static GgMatrix mv;                                   // ビュー変換行列
 
 /*
 ** シェーダ
@@ -63,16 +64,11 @@ static void display(void)
   if (firstTime == 0) { firstTime = glutGet(GLUT_ELAPSED_TIME); t = 0.0f; }
   else t = (GLfloat)((glutGet(GLUT_ELAPSED_TIME) - firstTime) % CYCLE) / (GLfloat)CYCLE;
 
-  // ビュー変換行列
-  GgMatrix mv;
-  mv.loadLookat(0.0f, 1.0f, 2.3f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f);
-  
   // モデルビュー変換行列
   GgMatrix mw = mv.rotate(0.0f, 1.0f, 0.0f, 12.56637f * t);
   
   // 法線変換行列
-  GgMatrix mg;
-  mg.loadNormal(mw);
+  GgMatrix mg = mw.normal();
   
   // モデルビュー・投影変換
   GgMatrix mc = mp * mw;
@@ -202,6 +198,9 @@ static void init(void)
   glActiveTexture(GL_TEXTURE0);
   ggLoadImage("sysa.tga", GL_RGBA);
 
+  // ビュー変換行列を求める
+  mv.loadLookat(0.0f, 1.0f, 2.3f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f);
+  
   // 隠面消去
   glEnable(GL_DEPTH_TEST);
 
