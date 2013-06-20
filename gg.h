@@ -1588,19 +1588,19 @@ namespace gg
   };
 
   // 回転の変換行列 m を表す四元数を求める
-  inline GgQuaternion ggMatrixQuarternion(const GLfloat *m)
+  inline GgQuaternion ggMatrixQuaternion(const GLfloat *m)
   {
     GgQuaternion t;
     t.loadMatrix(m);
     return t;
   }
-  inline GgQuaternion ggMatrixQuarternion(const GgMatrix &m)
+  inline GgQuaternion ggMatrixQuaternion(const GgMatrix &m)
   {
-    return ggMatrixQuarternion(m.get());
+    return ggMatrixQuaternion(m.get());
   }
   
   // 四元数 q の回転の変換行列を求める
-  inline GgMatrix ggQuarternionMatrix(const GgQuaternion &q)
+  inline GgMatrix ggQuaternionMatrix(const GgQuaternion &q)
   {
     GLfloat m[16];
     q.getMatrix(m);
@@ -1610,7 +1610,7 @@ namespace gg
   }
   
   // 単位元を求める
-  inline GgQuaternion ggIdentityQuarternion(void)
+  inline GgQuaternion ggIdentityQuaternion(void)
   {
     GgQuaternion t;
     t.loadIdentity();
@@ -1618,31 +1618,31 @@ namespace gg
   }
   
   // (x, y, z) を軸として角度 a 回転する四元数を求める
-  inline GgQuaternion ggRotateQuarternion(GLfloat x, GLfloat y, GLfloat z, GLfloat a)
+  inline GgQuaternion ggRotateQuaternion(GLfloat x, GLfloat y, GLfloat z, GLfloat a)
   {
     GgQuaternion t;
     t.loadRotate(x, y, z, a);
     return t;
   }
-  inline GgQuaternion ggRotateQuarternion(const GLfloat *v, GLfloat a)
+  inline GgQuaternion ggRotateQuaternion(const GLfloat *v, GLfloat a)
   {
-    return ggRotateQuarternion(v[0], v[1], v[2], a);
+    return ggRotateQuaternion(v[0], v[1], v[2], a);
   }
-  inline GgQuaternion ggRotateQuarternion(const GLfloat *v)
+  inline GgQuaternion ggRotateQuaternion(const GLfloat *v)
   {
-    return ggRotateQuarternion(v[0], v[1], v[2], v[3]);
+    return ggRotateQuaternion(v[0], v[1], v[2], v[3]);
   }
   
   // オイラー角 (h, p, r) で与えられた回転を表す四元数を求める
-  inline GgQuaternion ggEulerQuarternion(GLfloat h, GLfloat p, GLfloat r)
+  inline GgQuaternion ggEulerQuaternion(GLfloat h, GLfloat p, GLfloat r)
   {
     GgQuaternion t;
     t.loadEuler(h, p, r);
     return t;
   }
-  inline GgQuaternion ggEulerQuarternion(const GLfloat *e)
+  inline GgQuaternion ggEulerQuaternion(const GLfloat *e)
   {
-    return ggEulerQuarternion(e[0], e[1], e[2]);
+    return ggEulerQuaternion(e[0], e[1], e[2]);
   }
   
   // 球面線形補間
@@ -1678,7 +1678,7 @@ namespace gg
   }
   
   // 四元数の逆を求める
-  inline GgQuaternion ggInvertQuarternion(const GgQuaternion &q)
+  inline GgQuaternion ggInvertQuaternion(const GgQuaternion &q)
   {
     return q.invert();
   }
