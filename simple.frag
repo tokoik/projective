@@ -1,18 +1,21 @@
-#version 120
+#version 330
 
 // 反射光強度
-varying vec3 idiff;
-varying vec3 tdiff;
+in vec3 idiff;
+in vec3 tdiff;
 
 // テクスチャ座標
-varying vec4 tc;
+in vec4 tc;
 
 // テクスチャ
 uniform sampler2D tex;
 
+// カラーバッファ
+layout (location = 0) out vec4 fc;
+
 void main(void)
 {
-  vec4 color = texture2DProj(tex, tc);
+  vec4 color = textureProj(tex, tc);
 
-  gl_FragColor = vec4(idiff + tdiff * color.rgb * color.a, 1.0);
+  fc = vec4(idiff + tdiff * color.rgb * color.a, 1.0);
 }

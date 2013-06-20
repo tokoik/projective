@@ -64,8 +64,11 @@ static void display(void)
   if (firstTime == 0) { firstTime = glutGet(GLUT_ELAPSED_TIME); t = 0.0f; }
   else t = (GLfloat)((glutGet(GLUT_ELAPSED_TIME) - firstTime) % CYCLE) / (GLfloat)CYCLE;
 
+  // モデル変換行列
+  GgMatrix mm = ggRotate(0.0f, 1.0f, 0.0f, 12.56637f * t);
+  
   // モデルビュー変換行列
-  GgMatrix mw = mv.rotate(0.0f, 1.0f, 0.0f, 12.56637f * t);
+  GgMatrix mw = mv * mm;
   
   // 法線変換行列
   GgMatrix mg = mw.normal();
@@ -74,12 +77,11 @@ static void display(void)
   GgMatrix mc = mp * mw;
   
   // テクスチャ変換
-  GgMatrix mt;
-  mt.loadIdentity();
-  mt = mt.translate(0.5f, 0.5f, 0.5f);
-  mt = mt.scale(0.5f, 0.5f, 0.5f);
-  mt = mt.perspective(0.15f, 1.0f, 1.0f, 8.0f);
-  mt = mt.lookat(tp[0], tp[2], tp[2], 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f);
+  GgMatrix mt = ggTranslate(0.5f, 0.5f, 0.5f)
+              * ggScale(0.5f, -0.5f, 0.5f) 
+              * ggPerspective(0.15f, 1.0f, 1.0f, 8.0f)
+              * ggLookat(tp[0], tp[2], tp[2], 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f)
+              * mm;
  
   // 画面クリア
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -171,7 +173,7 @@ static void init(void)
   ggInit();
 
   // OBJ ファイルの読み込み
-  obj = ggElementsObj("model.dat");
+  obj = ggElementsObj("bunny.obj");
   
   // シェーダプログラムの読み込み
   program = ggLoadShader("simple.vert", "simple.frag");

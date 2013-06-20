@@ -1,4 +1,4 @@
-#version 120
+#version 330
 
 // 光源
 uniform vec3 ldir;	// 光源方向
@@ -9,8 +9,8 @@ uniform vec3 acol;	// 環境光強度
 uniform vec3 kdiff;	// 拡散反射係数
 
 // 頂点属性
-attribute vec4 pv;	// ローカル座標系の頂点位置
-attribute vec4 nv;  // 頂点の法線ベクトル
+layout (location = 0) in vec4 pv;	// ローカル座標系の頂点位置
+layout (location = 1) in vec4 nv;  // 頂点の法線ベクトル
 
 // 変換行列
 uniform mat4 mw;    // 視点座標系への変換行列
@@ -22,11 +22,11 @@ uniform mat4 mt;    // テクスチャ座標の変換行列
 uniform vec3 tp;
 
 // フラグメントシェーダに送る反射光強度
-varying vec3 idiff;
-varying vec3 tdiff;
+out vec3 idiff;
+out vec3 tdiff;
 
 // フラグメントシェーダに送るテクスチャ座標
-varying vec4 tc;
+out vec4 tc;
 
 void main(void)
 {
