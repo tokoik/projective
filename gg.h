@@ -1107,7 +1107,7 @@ namespace gg
     t.loadIdentity();
     return t;
   };
-  
+
   // 平行移動の変換行列を求める
   inline GgMatrix ggTranslate(GLfloat x, GLfloat y, GLfloat z, GLfloat w = 1.0f)
   {
@@ -1121,7 +1121,7 @@ namespace gg
     m.loadTranslate(t[0], t[1], t[2]);
     return m;
   }
-  
+
   // 拡大縮小の変換行列を求める
   inline GgMatrix ggScale(GLfloat x, GLfloat y, GLfloat z, GLfloat w = 1.0f)
   {
@@ -1135,7 +1135,7 @@ namespace gg
     m.loadScale(s[0], s[1], s[2]);
     return m;
   }
-  
+
   // 回転の変換行列を求める
   inline GgMatrix ggRotateX(GLfloat a)
   {
@@ -1173,7 +1173,7 @@ namespace gg
     m.loadRotate(r[0], r[1], r[2], r[3]);
     return m;
   }
-  
+
   // ビュー変換行列を求める
   inline GgMatrix ggLookat(
     GLfloat ex, GLfloat ey, GLfloat ez,     // 視点の位置
@@ -1195,7 +1195,7 @@ namespace gg
     m.loadLookat(e[0], e[1], e[2], t[0], t[1], t[2], u[0], u[1], u[2]);
     return m;
   }
-  
+
   // 直交投影変換行列を求める
   inline GgMatrix ggOrthogonal(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat zNear, GLfloat zFar)
   {
@@ -1203,7 +1203,7 @@ namespace gg
     m.loadOrthogonal(left, right, bottom, top, zNear, zFar);
     return m;
   }
-  
+
   // 透視透視投影変換行列を求める
   inline GgMatrix ggFrustum(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat zNear, GLfloat zFar)
   {
@@ -1211,7 +1211,7 @@ namespace gg
     m.loadFrustum(left, right, bottom, top, zNear, zFar);
     return m;
   }
-  
+
   // 画角を指定して透視投影変換行列を求める
   inline GgMatrix ggPerspective(GLfloat fovy, GLfloat aspect, GLfloat zNear, GLfloat zFar)
   {
@@ -1219,19 +1219,19 @@ namespace gg
     m.loadPerspective(fovy, aspect, zNear, zFar);
     return m;
   }
-  
+
   // 転置行列を求める
   inline GgMatrix ggTranspose(const GgMatrix &m)
   {
     return m.transpose();
   }
-  
+
   // 逆行列を求める
   inline GgMatrix ggInvert(const GgMatrix &m)
   {
     return m.invert();
   }
-  
+
   // 法線変換行列を求める
   inline GgMatrix ggNormal(const GgMatrix &m)
   {
@@ -1598,7 +1598,7 @@ namespace gg
   {
     return ggMatrixQuaternion(m.get());
   }
-  
+
   // 四元数 q の回転の変換行列を求める
   inline GgMatrix ggQuaternionMatrix(const GgQuaternion &q)
   {
@@ -1608,7 +1608,7 @@ namespace gg
     t.load(m);
     return t;
   }
-  
+
   // 単位元を求める
   inline GgQuaternion ggIdentityQuaternion(void)
   {
@@ -1616,7 +1616,7 @@ namespace gg
     t.loadIdentity();
     return t;
   }
-  
+
   // (x, y, z) を軸として角度 a 回転する四元数を求める
   inline GgQuaternion ggRotateQuaternion(GLfloat x, GLfloat y, GLfloat z, GLfloat a)
   {
@@ -1632,7 +1632,7 @@ namespace gg
   {
     return ggRotateQuaternion(v[0], v[1], v[2], v[3]);
   }
-  
+
   // オイラー角 (h, p, r) で与えられた回転を表す四元数を求める
   inline GgQuaternion ggEulerQuaternion(GLfloat h, GLfloat p, GLfloat r)
   {
@@ -1644,7 +1644,7 @@ namespace gg
   {
     return ggEulerQuaternion(e[0], e[1], e[2]);
   }
-  
+
   // 球面線形補間
   inline GgQuaternion ggSlerpQuaternion(const GLfloat *a, const GLfloat *b, GLfloat t)
   {
@@ -1664,25 +1664,25 @@ namespace gg
   {
     return ggSlerpQuaternion(a, q.get(), t);
   }
-  
+
   // 四元数のノルムを求める
   inline GLfloat ggNormQuaternion(const GgQuaternion &q)
   {
     return q.norm();
   }
-  
+
   // 共役四元数を求める
   inline GgQuaternion ggConjugateQuaternion(const GgQuaternion &q)
   {
     return q.conjugate();
   }
-  
+
   // 四元数の逆を求める
   inline GgQuaternion ggInvertQuaternion(const GgQuaternion &q)
   {
     return q.invert();
   }
-  
+
   // 正規化した四元数を求める
   inline GgQuaternion normalize(const GgQuaternion &q)
   {
