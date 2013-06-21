@@ -2148,9 +2148,6 @@ namespace gg
     // 頂点配列オブジェクト
     GLuint vao;
 
-    // 描画図形
-    GLenum mode;
-
   public:
 
     // デストラクタ
@@ -2162,13 +2159,12 @@ namespace gg
 
     // コンストラクタ
     GgShape(void)
-      : mode(GL_POINTS)
     {
       glGenVertexArrays(1, &vao);
       glBindVertexArray(vao);
     }
     GgShape(const GgShape &o)
-      : vao(o.vao), mode(o.mode)
+      : vao(o.vao)
     {
       glBindVertexArray(vao);
     }
@@ -2180,7 +2176,6 @@ namespace gg
       {
         vao = o.vao;
         glBindVertexArray(vao);
-        mode = o.mode;
       }
       return *this;
     }
@@ -2191,26 +2186,20 @@ namespace gg
       glBindVertexArray(vao);
     }
 
+    // 頂点配列オブジェクトの指定を解除する
+    void unuse(void) const
+    {
+      glBindVertexArray(0);
+    }
+
     // 頂点配列オブジェクト名を取り出す
     GLuint get(void) const
     {
       return vao;
     }
 
-    // 描画に使う基本図形を設定する
-    void setMode(GLenum mode)
-    {
-      this->mode = mode;
-    }
-
-    // 描画に使う基本図形を取り出す
-    GLenum getMode(void) const
-    {
-      return mode;
-    }
-
     // この形状を描画する手続きをオーバーライドする
-    virtual void draw(void) const = 0;
+    virtual void draw(GLenum mode = GL_POINTS) const = 0;
   };
 
   /*
@@ -2236,7 +2225,6 @@ namespace gg
       )
     {
       load(nv, pos, usage);
-      setMode(GL_POINTS);
     }
     GgPoints(const GgPoints &o)
       : GgShape(o), position(o.position) {}
@@ -2289,7 +2277,7 @@ namespace gg
     }
 
     // ポイントの描画
-    virtual void draw(void) const;
+    virtual void draw(GLenum mode = GL_POINTS) const;
   };
 
   /*
@@ -2316,7 +2304,6 @@ namespace gg
       )
     {
       load(nv, pos, norm);
-      setMode(GL_TRIANGLES);
     }
     GgTriangles(const GgTriangles &o)
       : GgPoints(o), normal(o.normal) {}
@@ -2373,7 +2360,7 @@ namespace gg
     }
 
     // 三角形群を描画する手続き
-    virtual void draw(void) const;
+    virtual void draw(GLenum mode = GL_TRIANGLE_FAN) const;
   };
 
   /*
@@ -2456,7 +2443,7 @@ namespace gg
     }
 
     // 三角形ポリゴンを描画する手続き
-    virtual void draw(void) const;
+    virtual void draw(GLenum mode = GL_TRIANGLES) const;
   };
 
   /*
