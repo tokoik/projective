@@ -1544,7 +1544,7 @@ namespace gg
     {
       return loadSlerp(a, q.array, t);
     }
-    GgQuaternion slerp(GLfloat *a, GLfloat t) const
+    GgQuaternion slerp(const GLfloat *a, GLfloat t) const
     {
       GgQuaternion q;
       slerp(q.array, array, a, t);
