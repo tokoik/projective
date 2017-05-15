@@ -7,21 +7,21 @@
     </Filter>
     <Filter Include="ヘッダー ファイル">
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
-      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
     </Filter>
     <Filter Include="リソース ファイル">
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
     <Filter Include="シェーダー ファイル">
-      <UniqueIdentifier>{2d0b7338-8c81-49e6-9c6b-0cd156bb2180}</UniqueIdentifier>
+      <UniqueIdentifier>{fa9941d9-6894-4420-bd3a-c151bb5f0023}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp">
+    <ClCompile Include="gg.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="gg.cpp">
+    <ClCompile Include="main.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
   </ItemGroup>
@@ -37,5 +37,6 @@
     <None Include="simple.vert">
       <Filter>シェーダー ファイル</Filter>
     </None>
+    <None Include="packages.config" />
   </ItemGroup>
 </Project>

@@ -29,7 +29,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #if defined(_WIN32)
 //#  pragma comment(linker, "/subsystem:\"windows\" /entry:\"mainCRTStartup\"")
 #  pragma warning(disable:4996)
-#  include "glut.h"
+#  include <GL/glut.h>
 #  include "glext.h"
 #  include "wglext.h"
 extern PFNGLBLENDCOLORPROC glBlendColor;
